@@ -11,5 +11,5 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./mariadb_data:/var/lib/mysql  # Stocke les données dans un dossier local
+      - ./mariadb_data:/var/lib/mysql
       - ../../sql/database-init.sql:/docker-entrypoint-initdb.d/database.sql
