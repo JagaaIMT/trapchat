@@ -28,5 +28,3 @@ coverage/
 # Fichiers d'outils de build
 *.swp
 *.swo
-
-.env
