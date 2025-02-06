@@ -1,1 +1,5 @@
 mariadb/mariadb_data
+neo4j/neo4j_data
+neo4j/neo4j_logs
+neo4j/neo4j_plugins
+neo4j/neo4j_conf

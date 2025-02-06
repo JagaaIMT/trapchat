@@ -19,6 +19,6 @@ describe('Test de la base de données', () => {
 
     it('devrait réussir à se connecter à MariaDB', async () => {
     const result = await connection.query('SELECT 1 as val');
-    expect(result[0].val).toBe(1);  // Vérifie que le résultat est bien 1
+    expect(result[0].val).toBe(1); 
     });
 });
