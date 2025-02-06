@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb-container
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password # Définit le mot de passe pour l'utilisateur root
+      MYSQL_DATABASE: testdb # Nom de la base de données à créer
+      MYSQL_USER: myuser # Nom de l'utilisateur
+      MYSQL_PASSWORD: mypassword # Mot de passe de l'utilisateur
+    ports:
+      - "3306:3306" # Expose le port 3306 sur l'hôte pour la connexion à la DB
+    volumes:
+      - mariadb-data:/var/lib/mysql # Montre le volume pour conserver les données
+
+volumes:
+  mariadb-data:
+    driver: local
