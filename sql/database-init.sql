@@ -60,7 +60,7 @@ INSERT INTO follows (utilisateur_id, follower_id) VALUES
 (2, 3),
 (3, 4),
 (4, 5),
-(5, 6),
+(6, 5),
 (6, 7),
 (7, 8),
 (8, 7);
@@ -70,7 +70,8 @@ INSERT INTO follows (utilisateur_id, follower_id) VALUES
 (9, 12),
 (12, 10),
 (10, 9),
-(12, 11);
+(12, 11),
+(11, 10);
 
 -- Insérer des produits
 INSERT INTO produits (nom_produit) VALUES
