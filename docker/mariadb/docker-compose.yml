@@ -13,3 +13,15 @@ services:
     volumes:
       - ./mariadb_data:/var/lib/mysql
       - ../../sql/database-init.sql:/docker-entrypoint-initdb.d/database.sql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin_container
+    restart: always
+    environment:
+      PMA_HOST: mariadb
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb
