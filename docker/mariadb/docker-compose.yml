@@ -3,17 +3,25 @@ version: '3.8'
 services:
   mariadb:
     image: mariadb:latest
-    container_name: mariadb-container
+    container_name: mariadb_container
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root_password # Définit le mot de passe pour l'utilisateur root
-      MYSQL_DATABASE: testdb # Nom de la base de données à créer
-      MYSQL_USER: myuser # Nom de l'utilisateur
-      MYSQL_PASSWORD: mypassword # Mot de passe de l'utilisateur
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: trapchat
     ports:
-      - "3306:3306" # Expose le port 3306 sur l'hôte pour la connexion à la DB
+      - "3306:3306"
     volumes:
-      - mariadb-data:/var/lib/mysql # Montre le volume pour conserver les données
+      - ./mariadb_data:/var/lib/mysql
+      - ../../sql/database-init.sql:/docker-entrypoint-initdb.d/database.sql
 
-volumes:
-  mariadb-data:
-    driver: local
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin_container
+    restart: always
+    environment:
+      PMA_HOST: mariadb
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb

@@ -1,0 +1,5 @@
+CREATE (p1:Produit {id: apoc.create.uuid(), nom: 'Ordinateur Portable'})
+CREATE (p2:Produit {id: apoc.create.uuid(), nom: 'Smartphone'})
+CREATE (p3:Produit {id: apoc.create.uuid(), nom: 'Casque Audio'})
+CREATE (p4:Produit {id: apoc.create.uuid(), nom: 'Clavier Mécanique'})
+CREATE (p5:Produit {id: apoc.create.uuid(), nom: 'Souris Gamer'})

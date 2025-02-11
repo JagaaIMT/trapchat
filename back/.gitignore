@@ -17,16 +17,9 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Environnements (ex : fichiers de configuration avec des clés sensibles)
-.env
-.env.local
-.env.*.local
-
 # Fichiers de test
 coverage/
 
 # Fichiers d'outils de build
 *.swp
 *.swo
-
-.env
