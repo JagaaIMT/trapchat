@@ -4,7 +4,6 @@ const { driver } = require('../../../config/neo4j-db');
 async function createEntities(req, res) {
     const { base } = req.params;
     const { freq, nbUsers, nbFollowers, nbProduits, nbCommandes } = req.body;
-    // On s'assure que frq est un entier et on définit une valeur par défaut si besoin.
     const commitFreq = parseInt(freq, 10) || 100;
     console.log('freq:', commitFreq, 'nbUsers:', nbUsers, 'nbFollowers:', nbFollowers, 'nbProduits:', nbProduits, 'nbCommandes:', nbCommandes);
 
