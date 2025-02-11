@@ -14,8 +14,69 @@ async function getProduitViral(req, res,) {
 }
 
 async function getProduitViralMaria(email, productId, lvl, res) {
-    res.status(200).json({ message: 'Maria db' });
+    try {
+        const query = `
+        WITH RECURSIVE influencer AS (
+          SELECT utilisateur_id, email
+          FROM utilisateurs
+          WHERE email = ?
+        ),
+        direct_orders AS (
+          SELECT 0 AS niveau,
+                 COUNT(co.commande_id) AS nbAcheteurs
+          FROM influencer i
+          LEFT JOIN commandes co ON co.utilisateur_id = i.utilisateur_id
+          WHERE co.produit_id = ?
+        ),
+        cte AS (
+          SELECT f.follower_id, 1 AS level
+          FROM follows f
+          WHERE f.utilisateur_id = (SELECT utilisateur_id FROM utilisateurs WHERE email = ?)
+          UNION ALL
+          SELECT f.follower_id, cte.level + 1 AS level
+          FROM cte
+          JOIN follows f ON f.utilisateur_id = cte.follower_id
+          WHERE cte.level < ?
+        ),
+        min_levels AS (
+          SELECT follower_id, MIN(level) AS niveau
+          FROM cte
+          GROUP BY follower_id
+        ),
+        followers_orders AS (
+          SELECT ml.niveau,
+                 COUNT(DISTINCT co.utilisateur_id) AS nbAcheteurs
+          FROM min_levels ml
+          JOIN commandes co ON co.utilisateur_id = ml.follower_id
+          WHERE co.produit_id = ?
+          GROUP BY ml.niveau
+        )
+        SELECT * FROM direct_orders
+        UNION ALL
+        SELECT * FROM followers_orders
+        ORDER BY niveau;
+      `;
+        // Paramètres dans l'ordre : email, productId, email, lvl, productId
+        const params = [email, productId, email, lvl, productId];
+        const rows = await pool.query(query, params);
+
+        // Conversion des BigInt
+        const fixedRows = rows.map(row => {
+            for (let key in row) {
+                if (typeof row[key] === 'bigint') {
+                    row[key] = Number(row[key]);
+                }
+            }
+            return row;
+        });
+
+        return res.status(200).json(fixedRows);
+    } catch (error) {
+        console.error('Erreur dans getProduitViralMaria:', error);
+        return res.status(500).json({ error: error.message });
+    }
 }
+
 
 async function getProduitViralNeo4j(email, productId, lvl, res) {
     if (!email || !productId || !lvl) {

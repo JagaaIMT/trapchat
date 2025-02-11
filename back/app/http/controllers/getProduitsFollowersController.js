@@ -14,8 +14,56 @@ async function getProduitsFollowers(req, res,) {
 }
 
 async function getProduitsFollowersMaria(email, lvl, res) {
-    res.status(200).json({ message: 'Maria db' });
+    try {
+        const query = `
+        WITH RECURSIVE cte AS (
+          SELECT f.follower_id, 1 AS level
+          FROM follows f
+          WHERE f.utilisateur_id = (SELECT utilisateur_id FROM utilisateurs WHERE email = ?)
+          UNION ALL
+          SELECT f.follower_id, cte.level + 1 AS level
+          FROM cte
+          JOIN follows f ON f.utilisateur_id = cte.follower_id
+          WHERE cte.level < ?
+        ),
+        min_levels AS (
+          SELECT follower_id, MIN(level) AS niveau
+          FROM cte
+          GROUP BY follower_id
+        )
+        SELECT 
+          ml.niveau,
+          p.nom_produit AS produit,
+          COUNT(co.commande_id) AS nbCommandes,
+          GROUP_CONCAT(DISTINCT u.email SEPARATOR ', ') AS acheteurs
+        FROM min_levels ml
+        JOIN commandes co ON co.utilisateur_id = ml.follower_id
+        JOIN produits p ON p.produit_id = co.produit_id
+        JOIN utilisateurs u ON u.utilisateur_id = ml.follower_id
+        GROUP BY ml.niveau, p.produit_id
+        ORDER BY ml.niveau, nbCommandes DESC;
+      `;
+        // Paramètres : email, lvl
+        const params = [email, lvl];
+        const rows = await pool.query(query, params);
+
+        // Conversion des BigInt
+        const fixedRows = rows.map(row => {
+            for (let key in row) {
+                if (typeof row[key] === 'bigint') {
+                    row[key] = Number(row[key]);
+                }
+            }
+            return row;
+        });
+
+        return res.status(200).json(fixedRows);
+    } catch (error) {
+        console.error('Erreur dans getProduitsFollowersMaria:', error);
+        return res.status(500).json({ error: error.message });
+    }
 }
+
 
 async function getProduitsFollowersNeo4j(email, lvl, res) {
     if (!email || !lvl) {
