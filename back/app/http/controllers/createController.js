@@ -19,112 +19,128 @@ async function createEntities(req, res) {
 const createEntitiesMaria = async (commitFreq, nbUsers, nbFollowers, nbProduits, nbCommandes, res) => {
     let conn;
     const startTime = process.hrtime();
-
     try {
-        conn = await pool.getConnection();
-
-        // 1️⃣ Insertion des utilisateurs en batch
-        for (let i = 0; i < nbUsers; i += commitFreq) {
-            const batchSize = Math.min(commitFreq, nbUsers - i);
-            let userPlaceholders = [];
-            let userValues = [];
-            for (let j = i; j < i + batchSize; j++) {
-                const uniqueEmail = `email${Date.now()}_${j}@example.com`;
-                userPlaceholders.push("(?, ?)");
-                userValues.push(`User_${j}`, uniqueEmail);
-            }
-            const insertUsersSQL = `INSERT INTO utilisateurs (nom, email) VALUES ${userPlaceholders.join(", ")}`;
-            await conn.beginTransaction();
-            await conn.query(insertUsersSQL, userValues);
-            await conn.commit();
+      conn = await pool.getConnection();
+  
+      // 1️⃣ Insertion des nouveaux utilisateurs en batch
+      for (let i = 0; i < nbUsers; i += commitFreq) {
+        const batchSize = Math.min(commitFreq, nbUsers - i);
+        let userPlaceholders = [];
+        let userValues = [];
+        for (let j = i; j < i + batchSize; j++) {
+          const uniqueEmail = `email${Date.now()}_${j}@example.com`;
+          userPlaceholders.push("(?, ?)");
+          userValues.push(`User_${j}`, uniqueEmail);
         }
-        console.log(`✅ ${nbUsers} utilisateurs insérés.`);
-
-        // 2️⃣ Insertion des relations de follow
-        const userIds = Array.from({ length: nbUsers }, (_, i) => i + 1);
-        let followValues = [];
-        // On génère toutes les relations dans un tableau
-        for (let i = 0; i < nbUsers; i++) {
-            const followersSet = new Set();
-            while (followersSet.size < nbFollowers) {
-                const randomFollowerId = userIds[Math.floor(Math.random() * userIds.length)];
-                const randomFolloweeId = userIds[Math.floor(Math.random() * userIds.length)];
-                if (randomFollowerId !== randomFolloweeId && !followersSet.has(`${randomFollowerId}-${randomFolloweeId}`)) {
-                    followersSet.add(`${randomFollowerId}-${randomFolloweeId}`);
-                    followValues.push(randomFollowerId, randomFolloweeId);
-                }
-            }
+        const insertUsersSQL = `INSERT INTO utilisateurs (nom, email) VALUES ${userPlaceholders.join(", ")}`;
+        await conn.beginTransaction();
+        await conn.query(insertUsersSQL, userValues);
+        await conn.commit();
+      }
+      console.log(`✅ ${nbUsers} nouveaux utilisateurs insérés.`);
+  
+      // Récupérer la liste de tous les utilisateurs (existants ET nouveaux)
+      const allUsers = await conn.query("SELECT utilisateur_id FROM utilisateurs");
+      const allUserIds = allUsers.map(u => u.utilisateur_id);
+      // Si vous souhaitez n'utiliser que les nouveaux utilisateurs (par exemple si leur email suit un motif particulier),
+      // vous pouvez filtrer par email : 
+      // const [newUsers] = await conn.query("SELECT utilisateur_id FROM utilisateurs WHERE email LIKE 'email%@example.com'");
+      // const newUserIds = newUsers.map(u => u.utilisateur_id);
+      // Ici, nous utilisons la liste complète pour créer des relations.
+  
+      // 2️⃣ Insertion des relations de follow en batch  
+      // Pour chaque **nouveau** utilisateur, on va créer nbFollowers relations vers un utilisateur aléatoire
+      let followValues = [];
+      // On suppose ici que vous voulez que chaque nouveau utilisateur (par exemple, ceux dont l'email commence par "email")
+      // suive un certain nombre de personnes parmi tous les utilisateurs existants.
+      const newUsers = await conn.query("SELECT utilisateur_id FROM utilisateurs WHERE email LIKE 'email%@example.com'");
+      const newUserIds = newUsers.map(u => u.utilisateur_id);
+      for (let userId of newUserIds) {
+        const followersSet = new Set();
+        while (followersSet.size < nbFollowers) {
+          // Choisir aléatoirement parmi TOUS les utilisateurs
+          const randomFollowee = allUserIds[Math.floor(Math.random() * allUserIds.length)];
+          if (userId !== randomFollowee && !followersSet.has(`${userId}-${randomFollowee}`)) {
+            followersSet.add(`${userId}-${randomFollowee}`);
+            // Notez : selon votre modèle, vous devez vérifier l'ordre des colonnes.
+            // Ici, j’utilise (utilisateur_id, follower_id) pour indiquer "l'utilisateur suit le follower".
+            followValues.push(userId, randomFollowee);
+          }
         }
-        const totalFollows = followValues.length / 2; // Chaque relation a 2 valeurs
-        for (let i = 0; i < totalFollows; i += commitFreq) {
-            const batchCount = Math.min(commitFreq, totalFollows - i);
-            const batchValues = followValues.slice(i * 2, (i + batchCount) * 2);
-            let batchPlaceholders = [];
-            for (let j = 0; j < batchCount; j++) {
-                batchPlaceholders.push("(?, ?)");
-            }
-            const insertFollowsSQL = `INSERT IGNORE INTO follows (follower_id, utilisateur_id) VALUES ${batchPlaceholders.join(", ")}`;
-            await conn.beginTransaction();
-            await conn.query(insertFollowsSQL, batchValues);
-            await conn.commit();
+      }
+      const totalFollows = followValues.length / 2;
+      for (let i = 0; i < totalFollows; i += commitFreq) {
+        const batchCount = Math.min(commitFreq, totalFollows - i);
+        const batchValues = followValues.slice(i * 2, (i + batchCount) * 2);
+        let batchPlaceholders = [];
+        for (let j = 0; j < batchCount; j++) {
+          batchPlaceholders.push("(?, ?)");
         }
-        console.log(`✅ Relations de follow insérées.`);
-
-        // 3️⃣ Insertion des produits en batch
-        for (let i = 0; i < nbProduits; i += commitFreq) {
-            const batchSize = Math.min(commitFreq, nbProduits - i);
-            let productPlaceholders = [];
-            let productValues = [];
-            for (let j = i; j < i + batchSize; j++) {
-                productPlaceholders.push("(?)");
-                productValues.push(`Produit_${j}_${Date.now()}`);
-            }
-            const insertProductsSQL = `INSERT INTO produits (nom_produit) VALUES ${productPlaceholders.join(", ")}`;
-            await conn.beginTransaction();
-            await conn.query(insertProductsSQL, productValues);
-            await conn.commit();
+        const insertFollowsSQL = `INSERT IGNORE INTO follows (utilisateur_id, follower_id) VALUES ${batchPlaceholders.join(", ")}`;
+        await conn.beginTransaction();
+        await conn.query(insertFollowsSQL, batchValues);
+        await conn.commit();
+      }
+      console.log(`✅ Relations de follow insérées.`);
+  
+      // 3️⃣ Insertion des nouveaux produits en batch
+      for (let i = 0; i < nbProduits; i += commitFreq) {
+        const batchSize = Math.min(commitFreq, nbProduits - i);
+        let productPlaceholders = [];
+        let productValues = [];
+        for (let j = i; j < i + batchSize; j++) {
+          productPlaceholders.push("(?)");
+          productValues.push(`Produit_${j}_${Date.now()}`);
         }
-        console.log(`✅ ${nbProduits} produits insérés.`);
-
-        // 4️⃣ Insertion des commandes en batch
-        // Chaque utilisateur recevra nbCommandes commandes
-        const totalCommands = nbUsers * nbCommandes;
-        let commandValues = [];
-        for (const userId of userIds) {
-            for (let i = 0; i < nbCommandes; i++) {
-                const randomProductId = Math.floor(Math.random() * nbProduits) + 1;
-                const randomDateAchat = new Date(Date.now() - Math.floor(Math.random() * 10000000000));
-                commandValues.push(userId, randomProductId, randomDateAchat);
-            }
+        const insertProductsSQL = `INSERT INTO produits (nom_produit) VALUES ${productPlaceholders.join(", ")}`;
+        await conn.beginTransaction();
+        await conn.query(insertProductsSQL, productValues);
+        await conn.commit();
+      }
+      console.log(`✅ ${nbProduits} nouveaux produits insérés.`);
+  
+      // Récupérer la liste complète des produits (existants ET nouveaux)
+      const allProducts = await conn.query("SELECT produit_id FROM produits");
+      const productIds = allProducts.map(p => p.produit_id);
+  
+      // 4️⃣ Insertion des commandes en batch  
+      // Pour chaque **nouveau** utilisateur, créer nbCommandes commandes avec des produits aléatoires parmi tous les produits existants.
+      let commandValues = [];
+      for (let userId of newUserIds) {
+        for (let i = 0; i < nbCommandes; i++) {
+          const randomProductId = productIds[Math.floor(Math.random() * productIds.length)];
+          const randomDateAchat = new Date(Date.now() - Math.floor(Math.random() * 10000000000));
+          commandValues.push(userId, randomProductId, randomDateAchat);
         }
-        // Chaque commande représente 3 valeurs
-        for (let i = 0; i < totalCommands; i += commitFreq) {
-            const batchCount = Math.min(commitFreq, totalCommands - i);
-            const batchValues = commandValues.slice(i * 3, (i + batchCount) * 3);
-            let batchPlaceholders = [];
-            for (let j = 0; j < batchCount; j++) {
-                batchPlaceholders.push("(?, ?, ?)");
-            }
-            const insertCommandsSQL = `INSERT INTO commandes (utilisateur_id, produit_id, date_achat) VALUES ${batchPlaceholders.join(", ")}`;
-            await conn.beginTransaction();
-            await conn.query(insertCommandsSQL, batchValues);
-            await conn.commit();
+      }
+      const totalCommands = newUserIds.length * nbCommandes;
+      for (let i = 0; i < totalCommands; i += commitFreq) {
+        const batchCount = Math.min(commitFreq, totalCommands - i);
+        const batchValues = commandValues.slice(i * 3, (i + batchCount) * 3);
+        let batchPlaceholders = [];
+        for (let j = 0; j < batchCount; j++) {
+          batchPlaceholders.push("(?, ?, ?)");
         }
-        console.log(`✅ ${totalCommands} commandes insérées.`);
-        const diff = process.hrtime(startTime);
-        console.log(`Temps d'exécution : ${diff[0]} secondes`);
-        console.log('✅ Toutes les données ont été insérées avec succès !');
-        res.status(200).json({ message: 'Données insérées avec succès', duration: diff });
-
+        const insertCommandsSQL = `INSERT INTO commandes (utilisateur_id, produit_id, date_achat) VALUES ${batchPlaceholders.join(", ")}`;
+        await conn.beginTransaction();
+        await conn.query(insertCommandsSQL, batchValues);
+        await conn.commit();
+      }
+      console.log(`✅ ${totalCommands} commandes insérées.`);
+  
+      const diff = process.hrtime(startTime);
+      const durationMs = diff[0] * 1000 + diff[1] / 1e6;
+      console.log(`Temps d'exécution : ${durationMs.toFixed(2)} ms`);
+      res.status(200).json({ message: 'Données insérées avec succès', duration: durationMs.toFixed(2) });
     } catch (err) {
-        console.error('Erreur lors de l’insertion des données :', err);
-        if (conn) await conn.rollback();
-        res.status(500).json({ error: 'Erreur lors de l’insertion des données' });
+      console.error('Erreur lors de l’insertion des données :', err);
+      if (conn) await conn.rollback();
+      res.status(500).json({ error: 'Erreur lors de l’insertion des données' });
     } finally {
-        if (conn) conn.release();
+      if (conn) conn.release();
     }
-};
-
+  };
+  
 /* ────────────────  NEO4J  ──────────────── */
 const createEntitiesNeo4j = async (commitFreq, nbUsers, nbFollowers, nbProduits, nbCommandes, res) => {
     const neoSession = driver.session();  
