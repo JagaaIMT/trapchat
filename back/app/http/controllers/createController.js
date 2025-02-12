@@ -143,109 +143,120 @@ const createEntitiesMaria = async (commitFreq, nbUsers, nbFollowers, nbProduits,
   
 /* ────────────────  NEO4J  ──────────────── */
 const createEntitiesNeo4j = async (commitFreq, nbUsers, nbFollowers, nbProduits, nbCommandes, res) => {
-    const neoSession = driver.session();  
+    const neoSession = driver.session();
     const startTime = process.hrtime();
-
+    
     try {
-        // 1️⃣ Création des utilisateurs avec commit en batch
-        let userEmails = [];
-        let tx = neoSession.beginTransaction();
-        for (let i = 0; i < nbUsers; i++) {
-            const uniqueEmail = `email${Date.now()}_${i}@example.com`;
-            const userName = `User_${i}`;
-            const query = `
-        CREATE (u:Utilisateur {id: apoc.create.uuid(), nom: $nom, email: $email})
-        RETURN u.email AS email
-      `;
-            await tx.run(query, { nom: userName, email: uniqueEmail });
-            userEmails.push(uniqueEmail);
-            if ((i + 1) % commitFreq === 0) {
-                await tx.commit();
-                tx = neoSession.beginTransaction();
-            }
-        }
-        await tx.commit();
-        console.log(`✅ ${nbUsers} utilisateurs insérés dans Neo4j.`);
-
-        // 2️⃣ Création des relations de follows
-        for (let i = 0; i < nbUsers; i++) {
-            let followsSet = new Set();
-            let txFollow = neoSession.beginTransaction();
-            let count = 0;
-            // On crée nbFollowers relations pour chaque utilisateur
-            while (followsSet.size < nbFollowers) {
-                const randomFollower = userEmails[Math.floor(Math.random() * userEmails.length)];
-                const randomFollowee = userEmails[Math.floor(Math.random() * userEmails.length)];
-                if (randomFollower !== randomFollowee && !followsSet.has(`${randomFollower}-${randomFollowee}`)) {
-                    followsSet.add(`${randomFollower}-${randomFollowee}`);
-                    const followQuery = `
-            MATCH (a:Utilisateur {email: $emailA}), (b:Utilisateur {email: $emailB})
-            WITH a, b
-            CREATE (a)-[:FOLLOWS]->(b)
-          `;
-                    await txFollow.run(followQuery, { emailA: randomFollower, emailB: randomFollowee });
-                    count++;
-                    if (count % commitFreq === 0) {
-                        await txFollow.commit();
-                        txFollow = neoSession.beginTransaction();
-                    }
-                }
-            }
-            await txFollow.commit();
-        }
-        console.log(`✅ Relations de follow insérées dans Neo4j.`);
-
-        // 3️⃣ Insertion des produits avec commit en batch
-        let productNames = [];
-        let txProd = neoSession.beginTransaction();
-        for (let i = 0; i < nbProduits; i++) {
-            const productName = `Produit_${i}_${Date.now()}`;
-            const productQuery = `
-        CREATE (p:Produit {id: apoc.create.uuid(), nom: $nom})
-        RETURN p.nom AS nom
-      `;
-            const result = await txProd.run(productQuery, { nom: productName });
-            productNames.push(result.records[0].get("nom"));
-            if ((i + 1) % commitFreq === 0) {
-                await txProd.commit();
-                txProd = neoSession.beginTransaction();
-            }
-        }
-        await txProd.commit();
-        console.log(`✅ ${nbProduits} produits insérés dans Neo4j.`);
-
-        // 4️⃣ Insertion des commandes avec commit en batch
-        let txCmd = neoSession.beginTransaction();
-        let countCmd = 0;
-        for (let email of userEmails) {
-            for (let i = 0; i < nbCommandes; i++) {
-                const randomProduct = productNames[Math.floor(Math.random() * productNames.length)];
-                const randomDateAchat = new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString();
-                const commandeQuery = `
-          MATCH (u:Utilisateur {email: $email}), (p:Produit {nom: $nom})
-          WITH u, p
-          CREATE (u)-[:A_COMMANDÉ {date_achat: $dateAchat}]->(p)
+      // 1️⃣ Création des nouveaux utilisateurs
+      let newUserEmails = [];
+      let tx = neoSession.beginTransaction();
+      for (let i = 0; i < nbUsers; i++) {
+        const uniqueEmail = `email${Date.now()}_${i}@example.com`;
+        const userName = `User_${i}`;
+        const query = `
+          CREATE (u:Utilisateur {id: apoc.create.uuid(), nom: $nom, email: $email})
+          RETURN u.email AS email
         `;
-                await txCmd.run(commandeQuery, { email, nom: randomProduct, dateAchat: randomDateAchat });
-                countCmd++;
-                if (countCmd % commitFreq === 0) {
-                    await txCmd.commit();
-                    txCmd = neoSession.beginTransaction();
-                }
-            }
+        const result = await tx.run(query, { nom: userName, email: uniqueEmail });
+        newUserEmails.push(result.records[0].get("email"));
+        if ((i + 1) % commitFreq === 0) {
+          await tx.commit();
+          tx = neoSession.beginTransaction();
         }
-        await txCmd.commit();
-        console.log(`✅ Commandes insérées dans Neo4j.`);
-        const diff = process.hrtime(startTime);
-        console.log(`Temps d'exécution : ${diff[0]} secondes`);
-        console.log('✅ Toutes les données ont été insérées avec succès dans Neo4j !');
-        res.status(200).json({ message: 'Données insérées avec succès dans Neo4j', duration: diff });
+      }
+      await tx.commit();
+      console.log(`✅ ${nbUsers} nouveaux utilisateurs insérés dans Neo4j.`);
+  
+      // 2️⃣ Récupérer la liste complète des utilisateurs (existants + nouveaux)
+      const allUsersResult = await neoSession.run(`MATCH (u:Utilisateur) RETURN u.email AS email`);
+      const allUserEmails = allUsersResult.records.map(record => record.get("email"));
+      console.log(`✅ Nombre total d'utilisateurs dans la base : ${allUserEmails.length}`);
+  
+      // 3️⃣ Création des relations de FOLLOWS pour chaque nouvel utilisateur
+      for (let email of newUserEmails) {
+        let followsSet = new Set();
+        let txFollow = neoSession.beginTransaction();
+        let count = 0;
+        while (followsSet.size < nbFollowers) {
+          // Choix aléatoire parmi tous les utilisateurs existants
+          const randomEmail = allUserEmails[Math.floor(Math.random() * allUserEmails.length)];
+          if (randomEmail !== email && !followsSet.has(`${email}-${randomEmail}`)) {
+            followsSet.add(`${email}-${randomEmail}`);
+            const followQuery = `
+              MATCH (a:Utilisateur {email: $emailA}), (b:Utilisateur {email: $emailB})
+              CREATE (a)-[:FOLLOWS]->(b)
+            `;
+            await txFollow.run(followQuery, { emailA: email, emailB: randomEmail });
+            count++;
+            if (count % commitFreq === 0) {
+              await txFollow.commit();
+              txFollow = neoSession.beginTransaction();
+            }
+          }
+        }
+        await txFollow.commit();
+      }
+      console.log(`✅ Relations de FOLLOWS créées pour les nouveaux utilisateurs.`);
+  
+      // 4️⃣ Insertion des nouveaux produits
+      let newProductNames = [];
+      let txProd = neoSession.beginTransaction();
+      for (let i = 0; i < nbProduits; i++) {
+        const productName = `Produit_${i}_${Date.now()}`;
+        const productQuery = `
+          CREATE (p:Produit {id: apoc.create.uuid(), nom: $nom})
+          RETURN p.nom AS nom
+        `;
+        const result = await txProd.run(productQuery, { nom: productName });
+        newProductNames.push(result.records[0].get("nom"));
+        if ((i + 1) % commitFreq === 0) {
+          await txProd.commit();
+          txProd = neoSession.beginTransaction();
+        }
+      }
+      await txProd.commit();
+      console.log(`✅ ${nbProduits} nouveaux produits insérés dans Neo4j.`);
+  
+      // 5️⃣ Récupérer la liste complète des produits (existants + nouveaux)
+      const allProductsResult = await neoSession.run(`MATCH (p:Produit) RETURN p.nom AS nom`);
+      const allProductNames = allProductsResult.records.map(record => record.get("nom"));
+      console.log(`✅ Nombre total de produits dans la base : ${allProductNames.length}`);
+  
+      // 6️⃣ Insertion des commandes (A_COMMANDÉ)
+      let txCmd = neoSession.beginTransaction();
+      let countCmd = 0;
+      for (let email of newUserEmails) {
+        for (let i = 0; i < nbCommandes; i++) {
+          const randomProduct = allProductNames[Math.floor(Math.random() * allProductNames.length)];
+          const randomDateAchat = new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString();
+          const commandeQuery = `
+            MATCH (u:Utilisateur {email: $email}), (p:Produit {nom: $nom})
+            CREATE (u)-[:A_COMMANDÉ {date_achat: $dateAchat}]->(p)
+          `;
+          await txCmd.run(commandeQuery, { email, nom: randomProduct, dateAchat: randomDateAchat });
+          countCmd++;
+          if (countCmd % commitFreq === 0) {
+            await txCmd.commit();
+            txCmd = neoSession.beginTransaction();
+          }
+        }
+      }
+      await txCmd.commit();
+      console.log(`✅ Commandes insérées dans Neo4j.`);
+  
+      // Calcul du temps d'exécution
+      const diff = process.hrtime(startTime);
+      const durationMs = diff[0] * 1000 + diff[1] / 1e6;
+      console.log(`Temps d'exécution : ${durationMs.toFixed(2)} ms`);
+      res.status(200).json({ message: 'Données insérées avec succès dans Neo4j', duration: durationMs.toFixed(2) });
+      
     } catch (err) {
-        console.error("❌ Erreur lors de l'insertion dans Neo4j :", err);
-        res.status(500).json({ error: 'Erreur lors de l’insertion des données dans Neo4j' });
+      console.error("❌ Erreur lors de l'insertion dans Neo4j :", err);
+      res.status(500).json({ error: 'Erreur lors de l’insertion des données dans Neo4j' });
     } finally {
-        await neoSession.close();
+      await neoSession.close();
     }
-};
+  };
+  
 
 module.exports = { createEntities };
