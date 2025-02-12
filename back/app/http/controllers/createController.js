@@ -18,6 +18,8 @@ async function createEntities(req, res) {
 /* ────────────────  MARIADB  ──────────────── */
 const createEntitiesMaria = async (commitFreq, nbUsers, nbFollowers, nbProduits, nbCommandes, res) => {
     let conn;
+    const startTime = process.hrtime();
+
     try {
         conn = await pool.getConnection();
 
@@ -109,9 +111,10 @@ const createEntitiesMaria = async (commitFreq, nbUsers, nbFollowers, nbProduits,
             await conn.commit();
         }
         console.log(`✅ ${totalCommands} commandes insérées.`);
-
+        const diff = process.hrtime(startTime);
+        console.log(`Temps d'exécution : ${diff[0]} secondes`);
         console.log('✅ Toutes les données ont été insérées avec succès !');
-        res.status(200).json({ message: 'Données insérées avec succès' });
+        res.status(200).json({ message: 'Données insérées avec succès', duration: diff });
 
     } catch (err) {
         console.error('Erreur lors de l’insertion des données :', err);
@@ -124,7 +127,9 @@ const createEntitiesMaria = async (commitFreq, nbUsers, nbFollowers, nbProduits,
 
 /* ────────────────  NEO4J  ──────────────── */
 const createEntitiesNeo4j = async (commitFreq, nbUsers, nbFollowers, nbProduits, nbCommandes, res) => {
-    const neoSession = driver.session();
+    const neoSession = driver.session();  
+    const startTime = process.hrtime();
+
     try {
         // 1️⃣ Création des utilisateurs avec commit en batch
         let userEmails = [];
@@ -215,9 +220,10 @@ const createEntitiesNeo4j = async (commitFreq, nbUsers, nbFollowers, nbProduits,
         }
         await txCmd.commit();
         console.log(`✅ Commandes insérées dans Neo4j.`);
-
+        const diff = process.hrtime(startTime);
+        console.log(`Temps d'exécution : ${diff[0]} secondes`);
         console.log('✅ Toutes les données ont été insérées avec succès dans Neo4j !');
-        res.status(200).json({ message: 'Données insérées avec succès dans Neo4j' });
+        res.status(200).json({ message: 'Données insérées avec succès dans Neo4j', duration: diff });
     } catch (err) {
         console.error("❌ Erreur lors de l'insertion dans Neo4j :", err);
         res.status(500).json({ error: 'Erreur lors de l’insertion des données dans Neo4j' });

@@ -15,6 +15,7 @@ async function getProduitViral(req, res,) {
 
 async function getProduitViralMaria(email, productId, lvl, res) {
     try {
+        const startTime = process.hrtime();
         const query = `
         WITH RECURSIVE influencer AS (
           SELECT utilisateur_id, email
@@ -70,7 +71,8 @@ async function getProduitViralMaria(email, productId, lvl, res) {
             return row;
         });
 
-        return res.status(200).json(fixedRows);
+        const diff = process.hrtime(startTime);
+        return res.status(200).json({data: fixedRows, duration: diff});
     } catch (error) {
         console.error('Erreur dans getProduitViralMaria:', error);
         return res.status(500).json({ error: error.message });
@@ -85,6 +87,7 @@ async function getProduitViralNeo4j(email, productId, lvl, res) {
 
     const session = driver.session();
     try {
+        const startTime = process.hrtime();
         const query = `
             // Partie 1 : Niveau 0 (l'influenceur lui-même)
             MATCH (influencer:Utilisateur {email: '${email}'})
@@ -109,7 +112,8 @@ async function getProduitViralNeo4j(email, productId, lvl, res) {
             nbAcheteurs: record.get('nbAcheteurs').toNumber ? record.get('nbAcheteurs').toNumber() : record.get('nbAcheteurs')
         }));
 
-        res.status(200).json(data);
+        const diff = process.hrtime(startTime);
+        return res.status(200).json({data: data, duration: diff});
     } catch (error) {
         console.error('Erreur dans /api/commande-par-niveau:', error);
         res.status(500).json({ error: error.message });

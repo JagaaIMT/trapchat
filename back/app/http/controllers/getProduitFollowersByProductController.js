@@ -15,6 +15,7 @@ async function getProduitFollowersByProduct(req, res,) {
 
 async function getProduitFollowersByProductMaria(email, lvl, productId, res) {
     try {
+        const startTime = process.hrtime();
         const query = `
           WITH RECURSIVE cte AS (
             SELECT f.follower_id, 1 AS level
@@ -58,7 +59,8 @@ async function getProduitFollowersByProductMaria(email, lvl, productId, res) {
             return row;
         });
 
-        return res.status(200).json(fixedRows);
+        const diff = process.hrtime(startTime);
+        return res.status(200).json({ data: fixedRows, duration: diff});
     } catch (error) {
         console.error('Erreur dans getProduitFollowersByProductMaria:', error);
         return res.status(500).json({ error: error.message });
@@ -72,6 +74,7 @@ async function getProduitFollowersByProductNeo4j(email, lvl, productId, res) {
 
     const session = driver.session();
     try {
+        const startTime = process.hrtime();
         const query = `
           MATCH (influencer:Utilisateur {email: '${email}'})
           MATCH p = (follower:Utilisateur)-[:FOLLOWS*1..${lvl}]->(influencer)
@@ -92,7 +95,8 @@ async function getProduitFollowersByProductNeo4j(email, lvl, productId, res) {
             acheteurs: record.get('acheteurs')
         }));
 
-        res.status(200).json(data);
+        const diff = process.hrtime(startTime);
+        res.status(200).json({data: data, duration: diff});
     } catch (error) {
         console.error('Erreur dans /api/produits-par-followers-produit:', error);
         res.status(500).json({ error: error.message });
