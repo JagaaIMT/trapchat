@@ -4,10 +4,18 @@ const express = require('express')
 const app = express()
 const createRoutes = require('./routes/createRoutes');
 const requestRoutes = require('./routes/requestRoutes');
-const port = 3000
+const port = 3000;
+const cors = require('cors');
 
-app.use(express.json()); 
 
+
+const corsOptions = {
+    origin: '*',
+};
+
+app.use(express.json());
+
+app.use(cors(corsOptions));
 app.use('/api', createRoutes);
 app.use('/api', requestRoutes);
 
