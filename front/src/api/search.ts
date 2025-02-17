@@ -17,7 +17,7 @@ export const useGetEmails = async (base: string, email: string) => {
 
 export const useGetProducts = async (base: string, product: string) => {
     try {
-        const response = await fetch(`http://localhost:3000/api/${base}/email/${product}`, {
+        const response = await fetch(`http://localhost:3000/api/${base}/product/${product}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json"

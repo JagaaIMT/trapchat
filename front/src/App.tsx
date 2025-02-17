@@ -1,6 +1,7 @@
 import "./App.css";
 import ProduitsFollowers from "./components/ProduitsFollowers";
 import Insert from "./components/Insert";
+import ProduitFollowersByProduct from "./components/ProduitFollowersByProduct";
 
 function App() {
     const urllist = ["mariadb", "neo4j"];
@@ -32,6 +33,9 @@ function App() {
                     permet d'observer le rôle d'influenceur d'un individu suite à un « post » mentionnant
                     un article spécifique
                 </em>
+                {urllist.map((value, key: number) => (
+                    <ProduitFollowersByProduct key={key} base={value} />
+                ))}
             </div>
         </>
     );

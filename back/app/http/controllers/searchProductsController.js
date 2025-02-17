@@ -22,7 +22,7 @@ const getProductsMariadb = async (product, res) => {
             params = [product];
         }
         const result = await pool.query(query, params);
-        const products = result.map(record => record.product);
+        const products = result.map(record => record.nom_produit);
         return res.status(200).json({ data: products });
     } catch (error) {
         return res.status(500).json({ error: error.message });
@@ -43,7 +43,7 @@ const getProductsNeo4j = async (product, res) => {
         } else {
             cypherQuery = `
                 MATCH (u:Produit)
-                WHERE u.nom CONTAINS $nom
+                WHERE u.nom CONTAINS $product
                 RETURN u.nom AS produit
                 LIMIT 10
             `;
