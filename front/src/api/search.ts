@@ -1,6 +1,23 @@
-export const useGetEmails = async (name: string, email: string) => {
+export const useGetEmails = async (base: string, email: string) => {
     try {
-        const response = await fetch(`http://localhost:3000/api/${name}/email/${email}`, {
+        const response = await fetch(`http://localhost:3000/api/${base}/email/${email}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        const jsonResponse = await response.json();
+        return jsonResponse;
+    }
+    catch (error) {
+        return;
+    }
+};
+
+export const useGetProducts = async (base: string, product: string) => {
+    try {
+        const response = await fetch(`http://localhost:3000/api/${base}/email/${product}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json"

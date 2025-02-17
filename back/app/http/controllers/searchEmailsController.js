@@ -2,8 +2,7 @@ const pool = require('../../../config/mariadb-db');
 const { driver } = require('../../../config/neo4j-db');
 
 async function searchEmails(req, res) {
-    const { base, email, productId } = req.params;
-    console.log('base', base, 'email', email, 'productId', productId);
+    const { base, email } = req.params;
     if (base === 'mariadb') {
         return getEmailsMariadb(email, res);
     } else if (base === 'neo4j') {
