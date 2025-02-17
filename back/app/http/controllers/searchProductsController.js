@@ -22,13 +22,15 @@ const getProductsMariadb = async (product, res) => {
             params = [product];
         }
         const result = await pool.query(query, params);
-        const products = result.map(record => record.nom_produit);
+        const products = result.map(record => ({
+            id: record.produit_id,
+            nom: record.nom_produit,
+        }));
         return res.status(200).json({ data: products });
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
 };
-
 const getProductsNeo4j = async (product, res) => {
     const session = driver.session();
     try {
@@ -36,7 +38,7 @@ const getProductsNeo4j = async (product, res) => {
         if (!product) {
             cypherQuery = `
                 MATCH (u:Produit)
-                RETURN u.nom AS produit
+                RETURN u.id AS id, u.nom AS produit
                 LIMIT 10
             `;
             params = {};
@@ -44,13 +46,17 @@ const getProductsNeo4j = async (product, res) => {
             cypherQuery = `
                 MATCH (u:Produit)
                 WHERE u.nom CONTAINS $product
-                RETURN u.nom AS produit
+                RETURN u.id AS id, u.nom AS produit
                 LIMIT 10
             `;
             params = { product };
         }
         const result = await session.run(cypherQuery, params);
-        const products = result.records.map(record => record.get('produit'));
+        const products = result.records.map(record => ({
+            id: record.get('id'),
+            nom: record.get('produit'),
+        }));
+        console.log(products);
         return res.status(200).json({ data: products });
     } catch (error) {
         return res.status(500).json({ error: error.message });
@@ -58,5 +64,6 @@ const getProductsNeo4j = async (product, res) => {
         await session.close();
     }
 };
+
 
 module.exports = { searchProducts };

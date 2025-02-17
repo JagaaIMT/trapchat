@@ -29,6 +29,7 @@ const ProduitsFollowers = (props: any) => {
             const formObj = Object.fromEntries(formData.entries());
 
             if (!formObj.lvl || !searchEmail) {
+                toast.error("Veuillez remplir tous les champs.");
                 return;
             }
             
@@ -44,9 +45,10 @@ const ProduitsFollowers = (props: any) => {
 
     return (
         <form
-            className="grid grid-cols-3 items-center w-200"
+            className="grid grid-cols-4 items-center"
             onSubmit={(e) => handleSubmitProduitsFollowers(e)}
         >
+            {base}
             <Autocomplete
                 disablePortal
                 options={emails}
