@@ -31,3 +31,20 @@ export const useProduitFollowersByProduct = async (base: string, email: string, 
         return;
     }
 }
+
+export const useProduitViral = async (base: string, email: string, lvl: any, productId: any) => {
+    try {
+        const response = await fetch(`http://localhost:3000/api/${base}/products-viral/${email}/${productId}/${lvl}`, 
+        {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+        const jsonResponse = await response.json();
+        return jsonResponse;
+    }
+    catch (error) {
+        return;
+    }
+}

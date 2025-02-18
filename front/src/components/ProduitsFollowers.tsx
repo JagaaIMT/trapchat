@@ -1,25 +1,17 @@
-import { Autocomplete, Button, TextField } from "@mui/material";
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { useGetEmails } from "../api/search";
-import { useProduitsFollowers } from "../api/request";
+// ProduitsFollowers.tsx
+import { Button } from "@mui/material";
+import { FormEvent, useCallback } from "react";
 import { toast } from "react-toastify";
+import { useEmailAutocomplete } from "../hooks/useEmailAutocomplete";
+import EmailAutocomplete from "../components/EmailAutocomplete";
+import { useProduitsFollowers } from "../api/request";
 
-const ProduitsFollowers = (props: any) => {
-    const { base } = props;
-    const [emails, setEmails] = useState<string[]>([]);
-    const [searchEmail, setSearchEmail] = useState<string>("");
+interface ProduitsFollowersProps {
+    base: string;
+}
 
-    useEffect(() => {
-        async function fetchEmails() {
-            try {
-                const response = await useGetEmails(base, searchEmail);
-                setEmails(response.data);
-            } catch (error) {
-                console.error(error);
-            }
-        }
-        fetchEmails();
-    }, [searchEmail]);
+const ProduitsFollowers = ({ base }: ProduitsFollowersProps) => {
+    const { emails, searchEmail, setSearchEmail } = useEmailAutocomplete(base);
 
     const handleSubmitProduitsFollowers = useCallback(
         async (e: FormEvent<HTMLFormElement>) => {
@@ -32,31 +24,27 @@ const ProduitsFollowers = (props: any) => {
                 toast.error("Veuillez remplir tous les champs.");
                 return;
             }
-            
+
             const response = await useProduitsFollowers(base, searchEmail, formObj.lvl);
             if (response && response.data && response.duration) {
-                toast.success("Données traité avec succès en: " + response.duration + "s");
+                toast.success("Données traitées avec succès en: " + response.duration + "s");
             } else {
-                toast.error("Une erreur lors de la recherche de données.");
+                toast.error("Une erreur est survenue lors de la recherche de données.");
             }
         },
-        [searchEmail]
+        [searchEmail, base]
     );
 
     return (
         <form
             className="grid grid-cols-4 items-center"
-            onSubmit={(e) => handleSubmitProduitsFollowers(e)}
+            onSubmit={handleSubmitProduitsFollowers}
         >
             {base}
-            <Autocomplete
-                disablePortal
-                options={emails}
-                value={searchEmail}
-                onInputChange={(event, newInputValue) => {
-                    setSearchEmail(newInputValue);
-                }}
-                renderInput={(params) => <TextField {...params} label="Email" />}
+            <EmailAutocomplete
+                emails={emails}
+                searchEmail={searchEmail}
+                onChange={(event, newInputValue) => setSearchEmail(newInputValue)}
             />
             <input
                 name="lvl"
@@ -69,6 +57,6 @@ const ProduitsFollowers = (props: any) => {
             </Button>
         </form>
     );
-}
+};
 
 export default ProduitsFollowers;

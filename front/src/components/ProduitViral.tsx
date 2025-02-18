@@ -1,22 +1,20 @@
-// ProduitFollowersByProduct.tsx
-import { Autocomplete, Button, TextField } from "@mui/material";
 import { FormEvent, useCallback } from "react";
-import { toast } from "react-toastify";
 import { useEmailAutocomplete } from "../hooks/useEmailAutocomplete";
-import { useProductAutocomplete, Produit } from "../hooks/useProductAutocomplete";
-import { useProduitFollowersByProduct } from "../api/request";
-import EmailAutocomplete from "../components/EmailAutocomplete";
+import { Produit, useProductAutocomplete } from "../hooks/useProductAutocomplete";
+import { toast } from "react-toastify";
+import EmailAutocomplete from "./EmailAutocomplete";
+import { Autocomplete, Button, TextField } from "@mui/material";
+import { useProduitViral } from "../api/request";
 
 interface ProduitFollowersByProductProps {
     base: string;
 }
 
-const ProduitFollowersByProduct = ({ base }: ProduitFollowersByProductProps) => {
+const ProduitViral = ({ base }: ProduitFollowersByProductProps) => {
     const { emails, searchEmail, setSearchEmail } = useEmailAutocomplete(base);
-    const { produits, searchProduct, setSearchProduct, selectedProduct, setSelectedProduct } =
-        useProductAutocomplete(base);
+    const { produits, searchProduct, setSearchProduct, selectedProduct, setSelectedProduct } = useProductAutocomplete(base);
 
-    const handleSubmitProduitFollowersByProduct = useCallback(
+    const handleSubmitProduitViral = useCallback(
         async (e: FormEvent<HTMLFormElement>) => {
             e.preventDefault();
 
@@ -28,13 +26,14 @@ const ProduitFollowersByProduct = ({ base }: ProduitFollowersByProductProps) => 
                 return;
             }
 
-            const response = await useProduitFollowersByProduct(
+            const response = await useProduitViral(
                 base,
                 searchEmail,
                 formObj.lvl,
                 selectedProduct.id
             );
             if (response && response.data && response.duration) {
+                console.log(response.data);
                 toast.success("Données traitées avec succès en: " + response.duration + "s");
             } else {
                 toast.error("Une erreur est survenue lors de la recherche de données.");
@@ -42,11 +41,10 @@ const ProduitFollowersByProduct = ({ base }: ProduitFollowersByProductProps) => 
         },
         [searchEmail, selectedProduct, base]
     );
-
     return (
         <form
             className="grid grid-cols-5 items-center"
-            onSubmit={handleSubmitProduitFollowersByProduct}
+            onSubmit={handleSubmitProduitViral}
         >
             {base}
             <EmailAutocomplete
@@ -75,6 +73,6 @@ const ProduitFollowersByProduct = ({ base }: ProduitFollowersByProductProps) => 
             </Button>
         </form>
     );
-};
+}
 
-export default ProduitFollowersByProduct;
+export default ProduitViral;

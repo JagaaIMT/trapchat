@@ -11,7 +11,7 @@ const Insert = (props: any) => {
 
             const formData = new FormData(e.currentTarget);
             const formObj = Object.fromEntries(formData.entries());
-            if(!formObj.commitFreq || !formObj.utilisateurs || !formObj.amis || !formObj.produits || !formObj.commandes) {
+            if(!formObj.freq || !formObj.utilisateurs || !formObj.amis || !formObj.produits || !formObj.commandes) {
                 toast.error("Veuillez remplir tous les champs.");
                 return;
             }
