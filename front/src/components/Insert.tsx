@@ -1,17 +1,46 @@
 import { Button } from "@mui/material";
-import { FormEvent, useCallback } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import { useInsert } from "../api/insert";
+import { useLocalStorage } from 'react-use';
+import { GridColDef } from "@mui/x-data-grid";
+import CustomDataGrid from "./CustomDataGrid";
+
+export interface InsertRecord {
+    timestamp: string;
+    duration: number;
+}
+
+export interface InsertRecords {
+    [key: string]: InsertRecord[];
+}
+
+const columns: GridColDef[] = [
+    { field: 'id', headerName: 'Id', width: 150 },
+    { field: 'duration', headerName: 'Duration (seconde)', width: 150 }
+];
+
 
 const Insert = (props: any) => {
     const { base } = props;
+    const [records, setRecords] = useLocalStorage<InsertRecords>("insert", {
+        mariadb: [],
+        neo4j: [],
+    });
+    const [rows, setRows] = useState<any[]>([]);
     const handleSubmit = useCallback(
         async (e: FormEvent<HTMLFormElement>, name: string) => {
             e.preventDefault();
 
             const formData = new FormData(e.currentTarget);
             const formObj = Object.fromEntries(formData.entries());
-            if(!formObj.freq || !formObj.utilisateurs || !formObj.amis || !formObj.produits || !formObj.commandes) {
+            if (
+                !formObj.freq ||
+                !formObj.utilisateurs ||
+                !formObj.amis ||
+                !formObj.produits ||
+                !formObj.commandes
+            ) {
                 toast.error("Veuillez remplir tous les champs.");
                 return;
             }
@@ -26,17 +55,38 @@ const Insert = (props: any) => {
 
             const response = await useInsert(name, data);
             if (response && response.message && response.duration) {
+                let insertData;
+                if (records && records[name]) {
+                    insertData = records[name].push({ timestamp: 'frrf', duration: response.duration  });
+
+                } else {
+                    insertData = { mariadb: [], neo4j: [] };
+                }
+                setRecords(records);
+
                 toast.success("Données insérées avec succès en: " + response.duration + "s");
             } else {
                 toast.error("Une erreur lors de l'insertion des données.");
             }
         },
-        []
+        [setRecords]
     );
+
+    useEffect(() => {
+        if (!records || !records[base])  return;
+        setRows(records[base].map((record, index) => {
+            return {
+                id: index + 1,
+                duration: record.duration,
+            }
+        }));
+        console.log("Records mis à jour :", records);
+    }, [records]);
+
     return (
         <>
-        <ToastContainer />
-        <div className="m-4">
+            <ToastContainer />
+            <div className="m-4">
                 <form
                     className="grid grid-cols-7 items-center w-200"
                     onSubmit={(e) => handleSubmit(e, base)}
@@ -78,7 +128,10 @@ const Insert = (props: any) => {
                         </Button>
                     </div>
                 </form>
-        </div>
+            </div>
+            <div>
+                <CustomDataGrid rows={rows} columns={columns}/>
+            </div>
         </>
     )
 }
