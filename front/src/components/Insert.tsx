@@ -1,4 +1,4 @@
-import { Button } from "@mui/material";
+import { Button, CircularProgress } from "@mui/material";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import { useInsert } from "../api/insert";
@@ -6,32 +6,21 @@ import { useLocalStorage } from 'react-use';
 import { GridColDef } from "@mui/x-data-grid";
 import CustomDataGrid from "./CustomDataGrid";
 
-export interface InsertRecord {
-    timestamp: string;
-    duration: number;
-}
-
-export interface InsertRecords {
-    [key: string]: InsertRecord[];
-}
-
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'Id', width: 150 },
-    { field: 'duration', headerName: 'Duration (seconde)', width: 150 }
+    { field: 'durationMariadb', headerName: 'Duration Mariadb (seconde)', width: 300 },
+    { field: 'durationNeo4j', headerName: 'Duration neo4j (seconde)', width: 300 }
 ];
 
-
-const Insert = (props: any) => {
-    const { base } = props;
-    const [records, setRecords] = useLocalStorage<InsertRecords>("insert", {
-        mariadb: [],
-        neo4j: [],
-    });
+const Insert = () => {
+    const [records, setRecords] = useLocalStorage<any>("insert", []);
     const [rows, setRows] = useState<any[]>([]);
-    const handleSubmit = useCallback(
-        async (e: FormEvent<HTMLFormElement>, name: string) => {
-            e.preventDefault();
+    const [loading, setLoading] = useState(false);
 
+    const handleSubmit = useCallback(
+        async (e: FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            setLoading(true);
             const formData = new FormData(e.currentTarget);
             const formObj = Object.fromEntries(formData.entries());
             if (
@@ -42,6 +31,7 @@ const Insert = (props: any) => {
                 !formObj.commandes
             ) {
                 toast.error("Veuillez remplir tous les champs.");
+                setLoading(false);
                 return;
             }
             const data = {
@@ -53,45 +43,50 @@ const Insert = (props: any) => {
                 nbCommandes: formObj.commandes,
             };
 
-            const response = await useInsert(name, data);
-            if (response && response.message && response.duration) {
-                let insertData;
-                if (records && records[name]) {
-                    insertData = records[name].push({ timestamp: 'frrf', duration: response.duration  });
+            const [responseMariadb, responseneo4j] = await useInsert(data);
+            console.log(responseMariadb, responseneo4j);
 
-                } else {
-                    insertData = { mariadb: [], neo4j: [] };
-                }
-                setRecords(records);
 
-                toast.success("Données insérées avec succès en: " + response.duration + "s");
-            } else {
+        
+            if (!responseMariadb || !responseneo4j) {
                 toast.error("Une erreur lors de l'insertion des données.");
+                setLoading(false);
+                return;
             }
+
+            if (records == null) setRecords([]);
+            records.push({
+                durationMariadb: responseMariadb.duration,
+                durationNeo4j: responseneo4j.duration,
+            });
+            setRecords(records);
+
+            toast.success("Données insérées avec succès!");
+            setLoading(false);
         },
         [setRecords]
     );
 
     useEffect(() => {
-        if (!records || !records[base])  return;
-        setRows(records[base].map((record, index) => {
+        if (!records) return;
+        setRows(records.map((record: any, index: number) => {
             return {
                 id: index + 1,
-                duration: record.duration,
+                durationMariadb: record.durationMariadb,
+                durationNeo4j: record.durationNeo4j,
             }
         }));
-        console.log("Records mis à jour :", records);
     }, [records]);
 
     return (
         <>
             <ToastContainer />
+            <h1 className="text-3xl font-bold">Insertion</h1>
             <div className="m-4">
                 <form
                     className="grid grid-cols-7 items-center w-200"
-                    onSubmit={(e) => handleSubmit(e, base)}
+                    onSubmit={(e) => handleSubmit(e)}
                 >
-                    <div className="font-bold">{base}</div>
                     <input
                         name="freq"
                         className="border-b mx-2"
@@ -123,14 +118,14 @@ const Insert = (props: any) => {
                         placeholder="Commandes"
                     />
                     <div>
-                        <Button type="submit" variant="contained">
-                            Insérer
+                        <Button type="submit" variant="contained" disabled={loading}>
+                            {loading ? <CircularProgress size={24} color="inherit" /> : "Inserer"}
                         </Button>
                     </div>
                 </form>
             </div>
             <div>
-                <CustomDataGrid rows={rows} columns={columns}/>
+                <CustomDataGrid rows={rows} columns={columns} />
             </div>
         </>
     )
