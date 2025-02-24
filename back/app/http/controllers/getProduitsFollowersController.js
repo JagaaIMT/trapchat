@@ -59,7 +59,8 @@ async function getProduitsFollowersMaria(email, lvl, res) {
         });
 
         const diff = process.hrtime(startTime);
-        return res.status(200).json({data: fixedRows, duration: diff});
+        const durationSec = diff[0] + diff[1] / 1e9;
+        return res.status(200).json({ data: fixedRows, duration: durationSec });
     } catch (error) {
         console.error('Erreur dans getProduitsFollowersMaria:', error);
         return res.status(500).json({ error: error.message });
@@ -97,7 +98,8 @@ async function getProduitsFollowersNeo4j(email, lvl, res) {
         }));
 
         const diff = process.hrtime(startTime);
-        return res.status(200).json({data: data, duration: diff});
+        const durationSec = diff[0] + diff[1] / 1e9;
+        return res.status(200).json({ data: data, duration: durationSec });
     } catch (error) {
         console.error('Erreur dans /api/produits-par-followers:', error);
         res.status(500).json({ error: error.message });

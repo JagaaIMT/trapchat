@@ -72,7 +72,8 @@ async function getProduitViralMaria(email, productId, lvl, res) {
         });
 
         const diff = process.hrtime(startTime);
-        return res.status(200).json({data: fixedRows, duration: diff});
+        const durationSec = diff[0] + diff[1] / 1e9;
+        return res.status(200).json({data: fixedRows, duration: durationSec});
     } catch (error) {
         console.error('Erreur dans getProduitViralMaria:', error);
         return res.status(500).json({ error: error.message });
@@ -113,7 +114,8 @@ async function getProduitViralNeo4j(email, productId, lvl, res) {
         }));
 
         const diff = process.hrtime(startTime);
-        return res.status(200).json({data: data, duration: diff});
+        const durationSec = diff[0] + diff[1] / 1e9;
+        return res.status(200).json({data: data, duration: durationSec});
     } catch (error) {
         console.error('Erreur dans /api/commande-par-niveau:', error);
         res.status(500).json({ error: error.message });

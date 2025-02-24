@@ -11,12 +11,8 @@ function App() {
     return (
         <>
             <div>
-                <h1 className="text-3xl font-bold">Insertion</h1>
-                {urllist.map((value, key: number) => (
-                    <Insert key={key} base={value} />
-                ))}
+                <Insert />
             </div>
-            
 
             <h1 className="text-3xl font-bold">Requêtes</h1>
             <div>
@@ -25,9 +21,7 @@ function App() {
                     d'un individu (niveau 1, ..., niveau n)  cette requête permet d'observer le rôle
                     d'influenceur d'un individu au sein du réseau social pour le déclenchement d'achats
                 </em>
-                {urllist.map((value, key: number) => (
-                    <ProduitsFollowers key={key} base={value} />
-                ))}
+                <ProduitsFollowers />
             </div>
             <div>
                 <em>
@@ -35,9 +29,7 @@ function App() {
                     permet d'observer le rôle d'influenceur d'un individu suite à un « post » mentionnant
                     un article spécifique
                 </em>
-                {urllist.map((value, key: number) => (
-                    <ProduitFollowersByProduct key={key} base={value} />
-                ))}
+                <ProduitFollowersByProduct />
             </div>
             <div>
                 <em>
