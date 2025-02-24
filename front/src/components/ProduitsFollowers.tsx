@@ -11,12 +11,12 @@ import { useLocalStorage } from "react-use";
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'Id', width: 150 },
-    { field: 'lstProductMariadb', headerName: 'List of product Mariadb', width: 200 },
-    { field: 'nbrProductMariadb', headerName: 'Number of product mariadb', width: 200 },
-    { field: 'durationMariadb', headerName: 'Duration Mariadb (seconde)', width: 200 },
-    { field: 'lstProductNeo4j', headerName: 'Liste of product neo4j', width: 200 },
-    { field: 'nbrPproductNeo4j', headerName: 'Number of product neo4j', width: 200 },
-    { field: 'durationNeo4j', headerName: 'Duration neo4j (seconde)', width: 200 }
+    { field: 'lstProductMariadb', headerName: 'Liste produits (MariaDB)', width: 200 },
+    { field: 'nbrProductMariadb', headerName: 'Nombre produits (MariaDB)', width: 200 },
+    { field: 'durationMariadb', headerName: 'Durée (MariaDB) (seconde)', width: 200 },
+    { field: 'lstProductNeo4j', headerName: 'Liste produits (Neo4j)', width: 200 },
+    { field: 'nbrPproductNeo4j', headerName: 'Nombre produits (Neo4j)', width: 200 },
+    { field: 'durationNeo4j', headerName: 'Durée (Neo4j) (seconde)', width: 200 }
 ];
 
 const ProduitsFollowers = () => {
@@ -82,9 +82,9 @@ const ProduitsFollowers = () => {
 
     return (
         <>
-            <div>
+            <div className="m-4">
                 <form
-                    className="grid grid-cols-4 items-center"
+                    className="grid grid-cols-4 items-center shadow-md p-4"
                     onSubmit={handleSubmitProduitsFollowers}
                 >
                     <EmailAutocomplete
@@ -94,7 +94,7 @@ const ProduitsFollowers = () => {
                     />
                     <input
                         name="lvl"
-                        className="border-b mx-2"
+                        className="border-1 m-2 p-2"
                         type="number"
                         placeholder="Niveau"
                     />
@@ -103,7 +103,7 @@ const ProduitsFollowers = () => {
                     </Button>
                 </form>
             </div>
-            <div>
+            <div className="shadow-md m-4 p-4">
                 <CustomDataGrid rows={rows} columns={columns} />
             </div>
         </>

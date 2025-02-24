@@ -11,12 +11,12 @@ import CustomDataGrid from "./CustomDataGrid";
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'Id', width: 150 },
-    { field: 'lvlMariadb', headerName: 'Level Mariadb', width: 200 },
-    { field: 'nbOrderMariadb', headerName: 'Number of product Mariadb', width: 200 },
-    { field: 'durationMariadb', headerName: 'Duration Mariadb (seconde)', width: 200 },
-    { field: 'lvlNoe4j', headerName: 'Level Noe4j', width: 200 },
-    { field: 'nbOrderNoe4j', headerName: 'Number of product Noe4j', width: 200 },
-    { field: 'durationNoe4j', headerName: 'Duration Noe4j (seconde)', width: 200 },
+    { field: 'lvlMariadb', headerName: 'Niveau (MariaDB)', width: 200 },
+    { field: 'nbOrderMariadb', headerName: 'Nombre produits (MariaDB)', width: 200 },
+    { field: 'durationMariadb', headerName: 'Duration (MariaDB) (seconde)', width: 200 },
+    { field: 'lvlNoe4j', headerName: 'Niveau (Neo4j)', width: 200 },
+    { field: 'nbOrderNoe4j', headerName: 'Nombre produits (Neo4j)', width: 200 },
+    { field: 'durationNoe4j', headerName: 'Durée (Neo4j) (seconde)', width: 200 },
 ];
 
 const ProduitViral = () => {
@@ -48,7 +48,6 @@ const ProduitViral = () => {
             const formData = new FormData(e.currentTarget);
             const formObj = Object.fromEntries(formData.entries());
 
-            console.log(formObj.lvl, searchEmail, selectedProductNeo4j, selectedProductMariadb);
             if (!formObj.lvl || !searchEmail || !selectedProductNeo4j || !selectedProductMariadb) {
                 toast.error("Veuillez remplir tous les champs.");
                 setLoading(false);
@@ -70,15 +69,11 @@ const ProduitViral = () => {
                 )
             ]);
 
-            console.log(responseMariadb, responseneo4j);
-
             if (!responseMariadb || !responseneo4j) {
                 toast.error("Une erreur est survenue lors de la recherche de données.");
                 setLoading(false);
                 return;
             }
-            console.log(responseMariadb.data.slice(-1)[0].nbAcheteurs);
-            console.log(formObj.lvl)
 
             if (records == null) setRecords([]);
             records.push({
@@ -107,14 +102,13 @@ const ProduitViral = () => {
                 durationMariadb: record.durationMariadb,
                 lvlNoe4j: record.lvlNoe4j,
                 nbOrderNoe4j: record.nbOrderNoe4j,
-                durationNeo4j: record.durationNeo4j
+                durationNoe4j: record.durationNoe4j
             }
         }));
     }, [records]);
       
     useEffect(() => {
         if (selectedProductNeo4j && produitsMariadb.length > 0) {
-            // On recherche le produit par nom dans la liste mariadb
             const corresponding = produitsMariadb.find((p: Produit) => p.nom === selectedProductNeo4j.nom);
             if (corresponding && (!selectedProductMariadb || selectedProductMariadb.id !== corresponding.id)) {
                 setSelectedProductMariadb(corresponding);
@@ -124,9 +118,9 @@ const ProduitViral = () => {
 
     return (
         <>
-            <div>
+            <div className="m-4">
                 <form
-                    className="grid grid-cols-5 items-center"
+                    className="grid grid-cols-5 items-center shadow-md p-4"
                     onSubmit={handleSubmitProduitViral}
                 >
                     <EmailAutocomplete
@@ -164,7 +158,7 @@ const ProduitViral = () => {
                     </Button>
                 </form>
             </div>
-            <div>
+            <div className="shadow-md m-4 p-4">
                 <CustomDataGrid rows={rows} columns={columns} />
             </div>
         </>

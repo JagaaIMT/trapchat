@@ -8,8 +8,8 @@ import CustomDataGrid from "./CustomDataGrid";
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'Id', width: 150 },
-    { field: 'durationMariadb', headerName: 'Duration Mariadb (seconde)', width: 300 },
-    { field: 'durationNeo4j', headerName: 'Duration neo4j (seconde)', width: 300 }
+    { field: 'durationMariadb', headerName: 'Durée requête (MariaDB) (seconde)', width: 300 },
+    { field: 'durationNeo4j', headerName: 'Durée equête (Neo4j) (seconde)', width: 300 }
 ];
 
 const Insert = () => {
@@ -44,9 +44,6 @@ const Insert = () => {
             };
 
             const [responseMariadb, responseneo4j] = await useInsert(data);
-            console.log(responseMariadb, responseneo4j);
-
-
         
             if (!responseMariadb || !responseneo4j) {
                 toast.error("Une erreur lors de l'insertion des données.");
@@ -81,39 +78,39 @@ const Insert = () => {
     return (
         <>
             <ToastContainer />
-            <h1 className="text-3xl font-bold">Insertion</h1>
+            <h1 className="text-3xl font-bold">Les insertions</h1>
             <div className="m-4">
                 <form
-                    className="grid grid-cols-7 items-center w-200"
+                    className="grid grid-cols-7 items-center shadow-md p-4"
                     onSubmit={(e) => handleSubmit(e)}
                 >
                     <input
                         name="freq"
-                        className="border-b mx-2"
+                        className="border-1 m-2 p-2"
                         type="number"
-                        placeholder="Freq"
+                        placeholder="Frequence commit"
                     />
                     <input
                         name="utilisateurs"
-                        className="border-b mx-2"
+                        className="border-1 m-2 p-2"
                         type="number"
                         placeholder="Utilisateurs"
                     />
                     <input
                         name="amis"
-                        className="border-b mx-2"
+                        className="border-1 m-2 p-2"
                         type="number"
                         placeholder="Amis"
                     />
                     <input
                         name="produits"
-                        className="border-b mx-2"
+                        className="border-1 m-2 p-2"
                         type="number"
                         placeholder="Produits"
                     />
                     <input
                         name="commandes"
-                        className="border-b mx-2"
+                        className="border-1 m-2 p-2"
                         type="number"
                         placeholder="Commandes"
                     />
@@ -124,7 +121,7 @@ const Insert = () => {
                     </div>
                 </form>
             </div>
-            <div>
+            <div className="shadow-md m-4 p-4">
                 <CustomDataGrid rows={rows} columns={columns} />
             </div>
         </>

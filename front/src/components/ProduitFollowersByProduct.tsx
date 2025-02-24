@@ -12,12 +12,12 @@ import CustomDataGrid from "./CustomDataGrid";
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'Id', width: 150 },
-    { field: 'lstProductMariadb', headerName: 'List of product Mariadb', width: 200 },
-    { field: 'nbrProductMariadb', headerName: 'Number of product mariadb', width: 200 },
-    { field: 'durationMariadb', headerName: 'Duration Mariadb (seconde)', width: 200 },
-    { field: 'lstProductNeo4j', headerName: 'Liste of product neo4j', width: 200 },
-    { field: 'nbrPproductNeo4j', headerName: 'Number of product neo4j', width: 200 },
-    { field: 'durationNeo4j', headerName: 'Duration neo4j (seconde)', width: 200 }
+    { field: 'lstProductMariadb', headerName: 'Liste produits (MariaDB)', width: 200 },
+    { field: 'nbrProductMariadb', headerName: 'Nombre produits (MariaDB)', width: 200 },
+    { field: 'durationMariadb', headerName: 'Durée (MariaDB) (seconde)', width: 200 },
+    { field: 'lstProductNeo4j', headerName: 'Liste produits (Neo4j)', width: 200 },
+    { field: 'nbrPproductNeo4j', headerName: 'Nombre produit (Neo4j)', width: 200 },
+    { field: 'durationNeo4j', headerName: 'Durée (Neo4j) (seconde)', width: 200 }
 ];
 const ProduitFollowersByProduct = () => {
     const { emails, searchEmail, setSearchEmail } = useEmailAutocomplete("mariadb"); // Je prends mariadb arbitrairement car les deux bdd ont les mêmes données
@@ -74,8 +74,6 @@ const ProduitFollowersByProduct = () => {
                 setLoading(false);
                 return;
             }
-            console.log(responseMariadb);
-            console.log(responseneo4j);
 
             if (records == null) setRecords([]);
             records.push({
@@ -121,9 +119,9 @@ const ProduitFollowersByProduct = () => {
 
     return (
         <>
-            <div>
+            <div className="m-4">
                 <form
-                    className="grid grid-cols-5 items-center"
+                    className="grid grid-cols-5 items-center shadow-md p-4"
                     onSubmit={handleSubmitProduitFollowersByProduct}
                 >
                     <EmailAutocomplete
@@ -147,14 +145,12 @@ const ProduitFollowersByProduct = () => {
                         getOptionLabel={(option: Produit) => option.nom}
                         isOptionEqualToValue={(option: Produit, value: Produit) => option.id === value.id}
                         value={selectedProductMariadb}
-                        // onChange={(event, newValue) => setSelectedProductMariadb(newValue)}
-                        // onInputChange={(event, newInputValue) => setSearchProductMariadb(newInputValue)}
                         renderInput={(params) => <TextField {...params} label="Produit" />}
                         hidden={true}
                     />
                     <input
                         name="lvl"
-                        className="border-b mx-2"
+                        className="border-1 m-2 p-2"
                         type="number"
                         placeholder="Niveau"
                     />
@@ -163,7 +159,7 @@ const ProduitFollowersByProduct = () => {
                     </Button>
                 </form>
             </div>
-            <div>
+            <div className="shadow-md m-4 p-4">
                 <CustomDataGrid rows={rows} columns={columns} />
             </div>
         </>
