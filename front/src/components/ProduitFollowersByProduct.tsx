@@ -35,6 +35,7 @@ const ProduitFollowersByProduct = () => {
         selectedProduct: selectedProductMariadb,
         setSelectedProduct: setSelectedProductMariadb,
     } = useProductAutocomplete("mariadb");
+    
     const [records, setRecords] = useLocalStorage<any>("ProduitFollowersByProduct", []);
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);

@@ -43,11 +43,11 @@ const Insert = () => {
                 nbCommandes: formObj.commandes,
             };
 
-            const [responseMariadb, responseneo4j] = await Promise.all([
-                useInsert("mariadb", data),
-                useInsert("neo4j", data),
-            ]);
+            const [responseMariadb, responseneo4j] = await useInsert(data);
+            console.log(responseMariadb, responseneo4j);
 
+
+        
             if (!responseMariadb || !responseneo4j) {
                 toast.error("Une erreur lors de l'insertion des données.");
                 setLoading(false);

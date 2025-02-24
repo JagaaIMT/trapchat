@@ -40,9 +40,7 @@ function App() {
 
                     achats isolés pour lesquels le groupe social n’a pas d’impact
                 </em>
-                {urllist.map((value, key: number) => (
-                    <ProduitViral key={key} base={value} />
-                ))}
+                <ProduitViral />
             </div>
         </>
     );
