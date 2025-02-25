@@ -24,15 +24,12 @@ const ProduitViral = () => {
 
     const {
         produits: produitsNeo4j,
-        searchProduct: searchProductNeo4j,
         setSearchProduct: setSearchProductNeo4j,
         selectedProduct: selectedProductNeo4j,
         setSelectedProduct: setSelectedProductNeo4j,
     } = useProductAutocomplete("neo4j");
     const {
         produits: produitsMariadb,
-        searchProduct: searchProductMariadb,
-        setSearchProduct: setSearchProductMariadb,
         selectedProduct: selectedProductMariadb,
         setSelectedProduct: setSelectedProductMariadb,
     } = useProductAutocomplete("mariadb");
@@ -126,7 +123,7 @@ const ProduitViral = () => {
                     <EmailAutocomplete
                         emails={emails}
                         searchEmail={searchEmail}
-                        onChange={(event, newInputValue) => setSearchEmail(newInputValue)}
+                        onChange={(_, newInputValue) => setSearchEmail(newInputValue)}
                     />
                     <Autocomplete
                         disablePortal
@@ -134,8 +131,8 @@ const ProduitViral = () => {
                         getOptionLabel={(option: Produit) => option.nom}
                         isOptionEqualToValue={(option: Produit, value: Produit) => option.id === value.id}
                         value={selectedProductNeo4j}
-                        onChange={(event, newValue) => setSelectedProductNeo4j(newValue)}
-                        onInputChange={(event, newInputValue) => setSearchProductNeo4j(newInputValue)}
+                        onChange={(_, newValue) => setSelectedProductNeo4j(newValue)}
+                        onInputChange={(_, newInputValue) => setSearchProductNeo4j(newInputValue)}
                         renderInput={(params) => <TextField {...params} label="Produit" />}
                     />
                     <Autocomplete

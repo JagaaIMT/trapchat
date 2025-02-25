@@ -3,11 +3,11 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const pool = mariadb.createPool({
-    host: process.env.HOST,
-    user: process.env.USER,
-    password: process.env.PASSWORD,
-    database: process.env.DATABASE,
-    connectionLimit: process.env.CONNECTION_LIMIT,
+    host: "mariadb",
+    user: "root",
+    password: "root",
+    database: "trapchat",
+    connectionLimit: 10,
 });
 
 module.exports = pool;

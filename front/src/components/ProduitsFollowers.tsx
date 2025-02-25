@@ -90,7 +90,7 @@ const ProduitsFollowers = () => {
                     <EmailAutocomplete
                         emails={emails}
                         searchEmail={searchEmail}
-                        onChange={(event, newInputValue) => setSearchEmail(newInputValue)}
+                        onChange={(_, newInputValue) => setSearchEmail(newInputValue)}
                     />
                     <input
                         name="lvl"

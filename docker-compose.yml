@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  back:
+    build: ./back
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mariadb
+      - neo4j
+    networks:
+      - trapchat-network
+
+  front:
+    build: ./front
+    ports:
+      - "80:80"
+    depends_on:
+      - back
+    networks:
+      - trapchat-network
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: trapchat
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker/mariadb/mariadb_data:/var/lib/mysql
+      - ./sql/database-init.sql:/docker-entrypoint-initdb.d/database.sql
+    networks:
+      - trapchat-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin_container
+    restart: always
+    environment:
+      PMA_HOST: mariadb
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb
+    networks:
+      - trapchat-network
+
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j_container
+    restart: always
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/password
+      NEO4J_server.memory.pagecache.size: 512M
+      NEO4J_dbms.memory.heap.initial_size: 4096M
+      NEO4J_dbms.memory.heap.max_size: 8192M
+      NEO4J_dbms_memory_transaction_total_max: 2G
+
+      NEO4J_PLUGINS: '["apoc"]'
+    volumes:
+      - ./docker/neo4j/neo4j_data:/data
+      - ./docker/neo4j/neo4j_logs:/logs
+      - ./docker/neo4j/neo4j_conf:/var/lib/neo4j/conf
+      - ./docker/neo4j/neo4j_plugins:/plugins
+    networks:
+      - trapchat-network
+
+networks:
+  trapchat-network:
+    driver: bridge
